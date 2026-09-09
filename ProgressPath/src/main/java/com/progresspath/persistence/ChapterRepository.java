@@ -63,7 +63,7 @@ public final class ChapterRepository {
     public Optional<Chapter> findById(long id) {
         String sql = "SELECT id, course_id, name, weight, progress, target_date FROM chapters WHERE id = ?";
         List<Chapter> result = find(sql, id);
-        return result.isEmpty() ? Optional.empty() : Optional.of(result.getFirst());
+        return result.isEmpty() ? Optional.empty() : Optional.of(result.get(0));
     }
 
     public void updateProgress(long id, double progress) {

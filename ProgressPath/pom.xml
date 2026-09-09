@@ -16,7 +16,7 @@
 
     <!-- Common versions/settings -->
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <javafx.version>21.0.12</javafx.version>
@@ -60,14 +60,11 @@
     <build>
         <plugins>
 
-            <!-- Compile using Java 21 -->
+            <!-- Compile using the Java release declared in <maven.compiler.release> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
-                <configuration>
-                    <release>21</release>
-                </configuration>
             </plugin>
 
             <!-- Allows: mvn javafx:run -->

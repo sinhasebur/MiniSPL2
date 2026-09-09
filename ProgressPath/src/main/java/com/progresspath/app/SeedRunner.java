@@ -2,6 +2,7 @@ package com.progresspath.app;
 
 import com.progresspath.persistence.DatabaseManager;
 import com.progresspath.persistence.DatabaseSeeder;
+import com.progresspath.persistence.SeedingReport;
 
 /**
  * Headless entry point used to create the SQLite schema and load the demo
