@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.progresspath.controller.MainController"
+            stylesheets="@../css/progresspath.css"
+            styleClass="app-shell">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="masthead">
+            <padding><Insets top="20" right="28" bottom="20" left="28"/></padding>
+            <VBox spacing="2">
+                <Label text="PROGRESSPATH" styleClass="brand"/>
+                <Label text="Academic planning and progress management" styleClass="muted"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label text="Data is stored on this device." styleClass="muted"/>
+        </HBox>
+    </top>
+    <center>
+        <TabPane fx:id="screenTabs" tabClosingPolicy="UNAVAILABLE" styleClass="screen-tabs">
+            <tabs>
+                <Tab text="Dashboard">
+                    <content>
+                        <VBox spacing="18" styleClass="screen" maxWidth="Infinity">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="14">
+                                <VBox spacing="3">
+                                    <Label text="Dashboard" styleClass="screen-title"/>
+                                    <Label text="A current view of the selected study plan." styleClass="muted"/>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <ChoiceBox fx:id="dashboardPlanChoice" prefWidth="260"/>
+                            </HBox>
+                            <HBox spacing="12" styleClass="metric-row">
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Actual progress" styleClass="eyebrow"/><Label fx:id="dashboardActual" text="0%" styleClass="metric-big"/></VBox>
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Expected progress" styleClass="eyebrow"/><Label fx:id="dashboardExpected" text="0%" styleClass="metric-big"/></VBox>
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Status" styleClass="eyebrow"/><Label fx:id="dashboardStatus" text="No plan" styleClass="metric-text"/></VBox>
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Overdue assignments" styleClass="eyebrow"/><Label fx:id="dashboardOverdue" text="0" styleClass="metric-big"/></VBox>
+                            </HBox>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Course risk" styleClass="section-title"/>
+                                    <TableView fx:id="dashboardRiskTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="dashboardRiskCourse" text="COURSE" prefWidth="140"/>
+                                            <TableColumn fx:id="dashboardRiskActual" text="ACTUAL" prefWidth="90"/>
+                                            <TableColumn fx:id="dashboardRiskExpected" text="EXPECTED" prefWidth="90"/>
+                                            <TableColumn fx:id="dashboardRiskVariance" text="VARIANCE" prefWidth="90"/>
+                                        </columns>
+                                    </TableView>
+                                </VBox>
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Next assignments" styleClass="section-title"/>
+                                    <ListView fx:id="dashboardAssignmentList" VBox.vgrow="ALWAYS"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Study plans">
+                    <content>
+                        <VBox spacing="16" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <Label text="Study plans" styleClass="screen-title"/>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" prefWidth="520" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Saved plans" styleClass="section-title"/>
+                                    <TableView fx:id="planTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="planNameColumn" text="PLAN" prefWidth="210"/>
+                                            <TableColumn fx:id="planDatesColumn" text="DATES" prefWidth="220"/>
+                                            <TableColumn fx:id="planStateColumn" text="STATE" prefWidth="100"/>
+                                        </columns>
+                                    </TableView>
+                                    <HBox spacing="8">
+                                        <Button text="Archive / restore" onAction="#handleArchivePlan" styleClass="secondary-button"/>
+                                        <Button text="Delete" onAction="#handleDeletePlan" styleClass="text-button"/>
+                                    </HBox>
+                                </VBox>
+                                <VBox spacing="10" prefWidth="360" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label fx:id="planFormTitle" text="Create plan" styleClass="section-title"/>
+                                    <TextField fx:id="planNameField" promptText="Plan name"/>
+                                    <Label text="Start date" styleClass="field-label"/>
+                                    <DatePicker fx:id="planStartField" maxWidth="Infinity"/>
+                                    <Label text="End date" styleClass="field-label"/>
+                                    <DatePicker fx:id="planEndField" maxWidth="Infinity"/>
+                                    <HBox spacing="8">
+                                        <Button text="Save plan" onAction="#handleSavePlan" styleClass="primary-button"/>
+                                        <Button text="Clear" onAction="#handleClearPlan" styleClass="secondary-button"/>
+                                    </HBox>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Plan details">
+                    <content>
+                        <VBox spacing="14" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="12">
+                                <Label text="Plan details" styleClass="screen-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <ChoiceBox fx:id="detailsPlanChoice" prefWidth="260"/>
+                            </HBox>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" prefWidth="330" styleClass="data-section">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Course" styleClass="section-title"/>
+                                    <TableView fx:id="detailsCourseTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="detailsCourseCode" text="CODE" prefWidth="90"/>
+                                            <TableColumn fx:id="detailsCourseName" text="NAME" prefWidth="180"/>
+                                        </columns>
+                                    </TableView>
+                                    <TextField fx:id="detailsCourseCodeField" promptText="Course code"/>
+                                    <TextField fx:id="detailsCourseNameField" promptText="Course name"/>
+                                    <HBox spacing="8"><Button text="Save course" onAction="#handleSaveCourse" styleClass="primary-button"/><Button text="Delete" onAction="#handleDeleteCourse" styleClass="text-button"/></HBox>
+                                </VBox>
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <HBox alignment="CENTER_LEFT"><Label text="Chapter" styleClass="section-title"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="detailsWeightLabel" text="Weight: 0 / 100%" styleClass="muted"/></HBox>
+                                    <TableView fx:id="detailsChapterTable" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="detailsChapterName" text="CHAPTER" prefWidth="210"/>
+                                            <TableColumn fx:id="detailsChapterWeight" text="WEIGHT" prefWidth="80"/>
+                                            <TableColumn fx:id="detailsChapterTarget" text="TARGET" prefWidth="130"/>
+                                        </columns>
+                                    </TableView>
+                                    <TextField fx:id="detailsChapterNameField" promptText="Chapter name"/>
+                                    <HBox spacing="8"><TextField fx:id="detailsChapterWeightField" promptText="Weight %"/><DatePicker fx:id="detailsChapterTargetField" promptText="Target date" HBox.hgrow="ALWAYS"/></HBox>
+                                    <HBox spacing="8"><Button text="Save chapter" onAction="#handleSaveChapter" styleClass="primary-button"/><Button text="Delete" onAction="#handleDeleteChapter" styleClass="text-button"/></HBox>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Progress">
+                    <content>
+                        <VBox spacing="14" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10"><Label text="Progress tracker" styleClass="screen-title"/><Region HBox.hgrow="ALWAYS"/><ChoiceBox fx:id="progressPlanChoice" prefWidth="220"/><ChoiceBox fx:id="progressCourseChoice" prefWidth="220"/><ChoiceBox fx:id="progressStrategyChoice" prefWidth="180"/></HBox>
+                            <HBox spacing="12" styleClass="metric-row">
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Actual" styleClass="eyebrow"/><Label fx:id="progressActualLabel" text="0%" styleClass="metric-big"/></VBox>
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Expected" styleClass="eyebrow"/><Label fx:id="progressExpectedLabel" text="0%" styleClass="metric-big"/></VBox>
+                                <VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Status" styleClass="eyebrow"/><Label fx:id="progressStatusLabel" text="No plan" styleClass="metric-text"/></VBox>
+                            </HBox>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="Chapters" styleClass="section-title"/><TableView fx:id="progressChapterTable" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="progressChapterName" text="CHAPTER" prefWidth="230"/><TableColumn fx:id="progressChapterValue" text="PROGRESS" prefWidth="100"/><TableColumn fx:id="progressChapterTarget" text="TARGET" prefWidth="130"/></columns></TableView><HBox spacing="8"><TextField fx:id="progressValueField" promptText="0–100"/><Button text="Save progress" onAction="#handleSaveProgress" styleClass="primary-button"/></HBox></VBox>
+                                <VBox spacing="10" prefWidth="430" styleClass="data-section" HBox.hgrow="ALWAYS"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="Selected chapter history" styleClass="section-title"/><TableView fx:id="progressHistoryTable" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="historyDate" text="RECORDED" prefWidth="150"/><TableColumn fx:id="historyBefore" text="FROM" prefWidth="80"/><TableColumn fx:id="historyAfter" text="TO" prefWidth="80"/></columns></TableView></VBox>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Assignments">
+                    <content>
+                        <VBox spacing="14" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10"><Label text="Assignments" styleClass="screen-title"/><Region HBox.hgrow="ALWAYS"/><ChoiceBox fx:id="assignmentPlanChoice" prefWidth="260"/></HBox>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="Assignment list" styleClass="section-title"/><TableView fx:id="assignmentTable" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="assignmentTitle" text="TITLE" prefWidth="240"/><TableColumn fx:id="assignmentCourse" text="COURSE" prefWidth="100"/><TableColumn fx:id="assignmentDue" text="DUE" prefWidth="120"/><TableColumn fx:id="assignmentPriority" text="PRIORITY" prefWidth="100"/><TableColumn fx:id="assignmentStatus" text="STATUS" prefWidth="120"/></columns></TableView><Button text="Delete selected" onAction="#handleDeleteAssignment" styleClass="text-button"/></VBox>
+                                <VBox spacing="10" prefWidth="330" styleClass="data-section"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="Assignment details" styleClass="section-title"/><ChoiceBox fx:id="assignmentCourseChoice"/><TextField fx:id="assignmentTitleField" promptText="Title"/><TextArea fx:id="assignmentDescriptionField" promptText="Description" prefRowCount="3"/><DatePicker fx:id="assignmentDueField" promptText="Due date"/><ChoiceBox fx:id="assignmentPriorityChoice"/><ChoiceBox fx:id="assignmentStatusChoice"/><HBox spacing="8"><Button text="Save" onAction="#handleSaveAssignment" styleClass="primary-button"/><Button text="Clear" onAction="#handleClearAssignment" styleClass="secondary-button"/></HBox></VBox>
+                            </HBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Focus">
+                    <content>
+                        <VBox spacing="16" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10"><Label text="Focus session" styleClass="screen-title"/><Region HBox.hgrow="ALWAYS"/><ChoiceBox fx:id="focusPlanChoice" prefWidth="220"/><ChoiceBox fx:id="focusCourseChoice" prefWidth="220"/><ChoiceBox fx:id="focusChapterChoice" prefWidth="220"/></HBox>
+                            <VBox alignment="CENTER" spacing="12" styleClass="timer-card"><Label fx:id="focusStateLabel" text="Ready" styleClass="eyebrow"/><Label fx:id="focusTimeLabel" text="00:00:00" styleClass="timer-number"/><HBox spacing="8" alignment="CENTER"><Button text="Start" onAction="#handleStartFocus" styleClass="primary-button"/><Button text="Pause" onAction="#handlePauseFocus" styleClass="secondary-button"/><Button text="Resume" onAction="#handleResumeFocus" styleClass="secondary-button"/><Button text="Complete" onAction="#handleCompleteFocus" styleClass="primary-button"/><Button text="Cancel" onAction="#handleCancelFocus" styleClass="text-button"/></HBox></VBox>
+                            <TextArea fx:id="focusNotesField" promptText="Optional session note" prefRowCount="2"/>
+                            <VBox spacing="10" styleClass="data-section" VBox.vgrow="ALWAYS"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="Saved sessions" styleClass="section-title"/><TableView fx:id="focusTable" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="focusDate" text="STARTED" prefWidth="180"/><TableColumn fx:id="focusDuration" text="DURATION" prefWidth="120"/><TableColumn fx:id="focusStatus" text="STATUS" prefWidth="120"/><TableColumn fx:id="focusNote" text="NOTE" prefWidth="300"/></columns></TableView></VBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Analytics">
+                    <content>
+                        <VBox spacing="16" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10"><Label text="Analytics and reports" styleClass="screen-title"/><Region HBox.hgrow="ALWAYS"/><ChoiceBox fx:id="analyticsPlanChoice" prefWidth="260"/><DatePicker fx:id="analyticsFromField"/><DatePicker fx:id="analyticsToField"/><Button text="Refresh" onAction="#handleRefreshAnalytics" styleClass="primary-button"/></HBox>
+                            <HBox spacing="12" styleClass="metric-row"><VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Actual progress" styleClass="eyebrow"/><Label fx:id="analyticsActual" text="0%" styleClass="metric-big"/></VBox><VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Expected progress" styleClass="eyebrow"/><Label fx:id="analyticsExpected" text="0%" styleClass="metric-big"/></VBox><VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Focus time" styleClass="eyebrow"/><Label fx:id="analyticsFocus" text="0h 0m" styleClass="metric-big"/></VBox><VBox styleClass="metric-card" HBox.hgrow="ALWAYS"><Label text="Completed assignments" styleClass="eyebrow"/><Label fx:id="analyticsCompleted" text="0" styleClass="metric-big"/></VBox></HBox>
+                            <VBox spacing="10" styleClass="data-section" VBox.vgrow="ALWAYS"><padding><Insets top="18" right="18" bottom="18" left="18"/></padding><Label text="At-risk course report" styleClass="section-title"/><TableView fx:id="analyticsRiskTable" VBox.vgrow="ALWAYS"><columns><TableColumn fx:id="analyticsCourse" text="COURSE" prefWidth="220"/><TableColumn fx:id="analyticsCourseActual" text="ACTUAL" prefWidth="120"/><TableColumn fx:id="analyticsCourseExpected" text="EXPECTED" prefWidth="120"/><TableColumn fx:id="analyticsCourseVariance" text="VARIANCE" prefWidth="120"/></columns></TableView></VBox>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+    <bottom>
+        <HBox styleClass="status-bar"><padding><Insets top="10" right="28" bottom="10" left="28"/></padding><Label fx:id="statusLabel" text="Ready. Use Study plans to begin." styleClass="status-label"/></HBox>
+    </bottom>
+</BorderPane>

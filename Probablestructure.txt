@@ -1,0 +1,25 @@
+ProgressPath/
+├── pom.xml
+├── data/                         # created automatically; SQLite is ignored by Git
+└── src/
+    ├── main/
+    │   ├── java/com/progresspath/
+    │   │   ├── app/Main.java                 # JavaFX entry point
+    │   │   ├── controller/MainController.java # MVC controller for the shell
+    │   │   ├── model/                         # records, facade, Observer event types
+    │   │   ├── persistence/                   # SQLite manager, seeder, repositories
+    │   │   ├── progress/                      # Strategy implementations
+    │   │   └── focus/                         # State-based focus timer
+    │   └── resources/
+    │       ├── fxml/main.fxml                 # seven-tab view
+    │       └── css/progresspath.css            # Swiss-inspired visual system
+    └── test/
+        └── java/com/progresspath/             # calculation and persistence tests
+
+The MVC flow is intentionally small:
+
+View (main.fxml + CSS) → MainController → ProgressPathModel → repositories → SQLite
+
+ProgressCalculationStrategy is used by the model for interchangeable progress rules;
+FocusTimer uses State objects for valid timer transitions; model listeners use Observer;
+repositories keep SQL separate from both the model and controller.

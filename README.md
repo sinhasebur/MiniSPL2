@@ -134,6 +134,17 @@ Possible future extensions include:
 
 ## Current Status
 
-**Project Phase: Proposal and Initial Design**
+**Project Phase: Minimal MVC Application**
 
-The exact database structure, user interface, algorithms, and design-pattern implementations will be refined during development while keeping the overall project objectives and architectural direction consistent.
+The current implementation provides one clean JavaFX MVC shell with seven tabs for study plans, course/chapter setup, progress history, assignments, focus sessions, and analytics. SQLite persistence, Strategy/State/Observer/Repository examples, validation, and a local data store are included. Charts, notifications, and advanced search remain suitable follow-up features.
+
+## Run the Prototype
+
+From the `ProgressPath` directory:
+
+```bash
+mvn test
+mvn javafx:run
+```
+
+The application creates `data/progresspath.db` on its first run. The generated database is ignored by Git.
