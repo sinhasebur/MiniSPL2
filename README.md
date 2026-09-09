@@ -151,7 +151,7 @@ The application creates `data/progresspath.db` on its first run. The generated d
 
 ## Seed Demo Data
 
-The seeder creates the schema and inserts a small, repeatable demo dataset (1 plan, 2 courses, 8 weighted chapters, 3 progress history rows, 5 assignments, 4 focus sessions). It is idempotent: running it again on a populated database does nothing.
+The seeder creates the schema and inserts a repeatable demo dataset of 11 study plans (22 courses, 61 weighted chapters, 30 progress history rows, 43 assignments, 30 focus sessions) covering topics like CS coursework, research methods, exam prep, capstone, archived history, web-dev bootcamp, Japanese, fitness, reading, music, and interview prep. Each chapter's weight sums to 100 within its course, and progress values are spread across the full 0–100% range so dashboards have something to render. It is idempotent: running it again on a populated database does nothing.
 
 From the `ProgressPath` directory:
 
