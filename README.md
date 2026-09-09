@@ -148,3 +148,37 @@ mvn javafx:run
 ```
 
 The application creates `data/progresspath.db` on its first run. The generated database is ignored by Git.
+
+## Seed Demo Data
+
+The seeder creates the schema and inserts a small, repeatable demo dataset (1 plan, 2 courses, 8 weighted chapters, 3 progress history rows, 5 assignments, 4 focus sessions). It is idempotent: running it again on a populated database does nothing.
+
+From the `ProgressPath` directory:
+
+```bash
+mvn -q -DskipTests package
+mvn -q exec:java -Dexec.mainClass=com.progresspath.app.SeedRunner
+```
+
+If the `exec-maven-plugin` is not configured yet, use the explicit classpath form instead:
+
+```bash
+mvn -q dependency:copy-dependencies -DskipTests
+java -cp "target/classes;target/dependency/*" com.progresspath.app.SeedRunner
+```
+
+The seeded values can then be inspected with any SQLite client, for example the `sqlite3` CLI shipped with Git for Windows:
+
+```bash
+sqlite3 -header -column data/progresspath.db "SELECT id, name, start_date, end_date FROM study_plans;"
+sqlite3 -header -column data/progresspath.db "SELECT c.code, ch.name, ch.weight, ch.progress, ch.target_date FROM chapters ch JOIN courses c ON c.id = ch.course_id ORDER BY c.code, ch.target_date;"
+sqlite3 -header -column data/progresspath.db "SELECT title, due_date, priority, status FROM assignments ORDER BY due_date;"
+sqlite3 -header -column data/progresspath.db "SELECT id, previous_progress, new_progress, recorded_at FROM progress_records ORDER BY recorded_at;"
+```
+
+To re-seed from scratch, delete the SQLite file first and run the seeder again:
+
+```bash
+rm data/progresspath.db
+mvn -q exec:java -Dexec.mainClass=com.progresspath.app.SeedRunner
+```
