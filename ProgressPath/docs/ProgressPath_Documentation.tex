@@ -12,8 +12,9 @@
 \usepackage{tabularx}
 \usepackage{amsmath}
 \usepackage{enumitem}
+\usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
 \usepackage[hidelinks]{hyperref}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
@@ -153,24 +154,156 @@ This revision adds the eighth, Assistant tab; the provider interface, Gemini Fla
 
 \subsection{Entity relationship view}
 
-The database has six application tables. A plan owns courses; a course owns chapters and assignments; a chapter owns progress history; and focus sessions belong to a course with an optional chapter link.
+The database has six application entities. This Chen-style view separates entity rectangles from relationship diamonds. An arrowhead at an entity end denotes the one (1) side; a plain connector denotes the many (N) side. Attributes are shown as ovals in the following views so the relationship lines remain readable.
 
 \begin{center}
-\begin{tikzpicture}[node distance=11mm and 13mm,
-  entity/.style={draw=black,rectangle,align=left,text width=40mm,inner sep=5pt,font=\small},
-  rel/.style={-Latex,draw=black,line width=0.5pt}]
-  \node[entity] (plan) {\textbf{study\_plans}\\PK id\\name, start\_date, end\_date\\archived, created\_at};
-  \node[entity,right=of plan] (course) {\textbf{courses}\\PK id\\FK study\_plan\_id\\code, name, created\_at};
-  \node[entity,below=of course] (chapter) {\textbf{chapters}\\PK id\\FK course\_id\\name, weight, progress\\target\_date, created\_at};
-  \node[entity,left=of chapter] (assignment) {\textbf{assignments}\\PK id\\FK course\_id\\title, description\\due\_date, priority, status};
-  \node[entity,right=of chapter] (history) {\textbf{progress\_records}\\PK id\\FK chapter\_id\\previous\_progress\\new\_progress, recorded\_at};
-  \node[entity,below=of chapter] (focus) {\textbf{focus\_sessions}\\PK id\\FK course\_id\\optional FK chapter\_id\\started\_at, ended\_at\\duration\_seconds, status, notes};
-  \draw[rel] (plan) -- node[above,font=\scriptsize]{1 : many} (course);
-  \draw[rel] (course) -- node[right,font=\scriptsize]{1 : many} (chapter);
-  \draw[rel] (course) -- node[above,font=\scriptsize]{1 : many} (assignment);
-  \draw[rel] (chapter) -- node[above,font=\scriptsize]{1 : many} (history);
-  \draw[rel] (course) -- node[right,font=\scriptsize]{1 : many} (focus);
-  \draw[rel] (chapter) -- node[right,font=\scriptsize]{0..1 link} (focus);
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,
+  entity/.style={draw=black,rectangle,minimum width=26mm,minimum height=10mm,align=center,font=\small\bfseries,inner sep=3pt},
+  relationship/.style={draw=black,diamond,aspect=2.0,minimum width=20mm,minimum height=9mm,align=center,font=\scriptsize\bfseries,inner sep=2pt},
+  connector/.style={draw=black,line width=0.55pt},
+  one/.style={connector,-{Latex[length=2mm,width=1.4mm]}}]
+  % The top chain contains the required entity rectangles and relationship diamonds.
+  \node[entity] (plan) at (0,0) {STUDY\\PLAN};
+  \node[relationship] (owns) at (3,0) {OWNS};
+  \node[entity] (course) at (6,0) {COURSE};
+  \node[relationship] (contains) at (9,0) {CONTAINS};
+  \node[entity] (chapter) at (12,0) {CHAPTER};
+  \node[relationship] (records) at (15,0) {RECORDS};
+  \node[entity] (history) at (18,0) {PROGRESS\\RECORD};
+
+  % Dependent entities are kept below their owning entity to avoid crossed lines.
+  \node[relationship] (has) at (6,-2.3) {HAS};
+  \node[entity] (assignment) at (6,-4.7) {ASSIGNMENT};
+  \node[relationship] (logs) at (8.8,-2.3) {LOGS};
+  \node[relationship] (references) at (13.1,-2.3) {REFERENCES};
+  \node[entity] (focus) at (12,-4.7) {FOCUS\\SESSION};
+
+  % Arrowheads mark the one side; plain connectors mark the many side.
+  \draw[one] (owns) -- (plan);
+  \draw[connector] (owns) -- (course);
+  \draw[one] (contains) -- (course);
+  \draw[connector] (contains) -- (chapter);
+  \draw[one] (records) -- (chapter);
+  \draw[connector] (records) -- (history);
+  \draw[one] (has) -- (course);
+  \draw[connector] (has) -- (assignment);
+  \draw[one] (logs) -- (course);
+  \draw[connector] (logs) -- (focus);
+  \draw[connector] (references) -- (chapter);
+  \draw[one] (references) -- (focus);
+\end{tikzpicture}
+}%
+\end{center}
+
+\begin{center}
+\small\textit{Legend: arrowhead = one side; plain connector = many side. The chapter link on a focus session is optional.}
+\end{center}
+
+\subsection{Entity attributes}
+
+The following Chen-style attribute views list every column from the schema. Every attribute is an oval connected to its entity rectangle. Primary keys are underlined; foreign keys are labelled FK; the nullable focus-session chapter link is labelled nullable.
+
+% One row per entity keeps every oval distinct and gives long column names room.
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  entity/.style={draw=black,rectangle,minimum width=31mm,minimum height=10mm,align=center,font=\small\bfseries,inner sep=3pt},
+  attribute/.style={draw=black,ellipse,minimum width=25mm,minimum height=8mm,align=center,font=\scriptsize,inner sep=2pt},
+  connector/.style={draw=black,line width=0.45pt}]
+  \node[entity] (plan) at (0,0) {STUDY\\PLAN};
+  \node[attribute] (planid) at (-3.7,1.5) {\underline{id}\\PK};
+  \node[attribute] (planname) at (-1.3,2.4) {name};
+  \node[attribute] (planstart) at (1.3,2.4) {start\_date};
+  \node[attribute] (planend) at (3.7,1.5) {end\_date};
+  \node[attribute] (planarchived) at (-3.7,-1.5) {archived};
+  \node[attribute] (plancreated) at (3.7,-1.5) {created\_at};
+  \draw[connector] (plan) -- (planid);
+  \draw[connector] (plan) -- (planname);
+  \draw[connector] (plan) -- (planstart);
+  \draw[connector] (plan) -- (planend);
+  \draw[connector] (plan) -- (planarchived);
+  \draw[connector] (plan) -- (plancreated);
+
+  \node[entity] (course) at (0,-5.8) {COURSE};
+  \node[attribute] (courseid) at (-3.7,-4.3) {\underline{id}\\PK};
+  \node[attribute] (coursefk) at (-1.3,-3.4) {study\_plan\_id\\FK};
+  \node[attribute] (coursecode) at (1.3,-3.4) {code};
+  \node[attribute] (coursename) at (-3.7,-7.3) {name};
+  \node[attribute] (coursecreated) at (3.7,-7.3) {created\_at};
+  \draw[connector] (course) -- (courseid);
+  \draw[connector] (course) -- (coursefk);
+  \draw[connector] (course) -- (coursecode);
+  \draw[connector] (course) -- (coursename);
+  \draw[connector] (course) -- (coursecreated);
+
+  \node[entity] (chapter) at (0,-11.8) {CHAPTER};
+  \node[attribute] (chapterid) at (-3.7,-10.3) {\underline{id}\\PK};
+  \node[attribute] (chapterfk) at (-1.3,-9.4) {course\_id\\FK};
+  \node[attribute] (chaptername) at (1.3,-9.4) {name};
+  \node[attribute] (chapterweight) at (3.7,-10.3) {weight};
+  \node[attribute] (chapterprogress) at (-3.7,-13.3) {progress};
+  \node[attribute] (chaptertarget) at (-1.3,-14.2) {target\_date};
+  \node[attribute] (chaptercreated) at (3.7,-13.3) {created\_at};
+  \draw[connector] (chapter) -- (chapterid);
+  \draw[connector] (chapter) -- (chapterfk);
+  \draw[connector] (chapter) -- (chaptername);
+  \draw[connector] (chapter) -- (chapterweight);
+  \draw[connector] (chapter) -- (chapterprogress);
+  \draw[connector] (chapter) -- (chaptertarget);
+  \draw[connector] (chapter) -- (chaptercreated);
+\end{tikzpicture}
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  entity/.style={draw=black,rectangle,minimum width=31mm,minimum height=10mm,align=center,font=\small\bfseries,inner sep=3pt},
+  attribute/.style={draw=black,ellipse,minimum width=25mm,minimum height=8mm,align=center,font=\scriptsize,inner sep=2pt},
+  connector/.style={draw=black,line width=0.45pt}]
+  \node[entity] (assignment) at (0,0) {ASSIGNMENT};
+  \node[attribute] (assignmentid) at (-3.7,1.5) {\underline{id}\\PK};
+  \node[attribute] (assignmentfk) at (-1.3,2.4) {course\_id\\FK};
+  \node[attribute] (assignmenttitle) at (1.3,2.4) {title};
+  \node[attribute] (assignmentdescription) at (3.7,1.5) {description};
+  \node[attribute] (assignmentdue) at (-3.7,-1.5) {due\_date};
+  \node[attribute] (assignmentpriority) at (1.3,-1.5) {priority};
+  \node[attribute] (assignmentstatus) at (0,-2.4) {status};
+  \draw[connector] (assignment) -- (assignmentid);
+  \draw[connector] (assignment) -- (assignmentfk);
+  \draw[connector] (assignment) -- (assignmenttitle);
+  \draw[connector] (assignment) -- (assignmentdescription);
+  \draw[connector] (assignment) -- (assignmentdue);
+  \draw[connector] (assignment) -- (assignmentpriority);
+  \draw[connector] (assignment) -- (assignmentstatus);
+
+  \node[entity] (history) at (0,-5.8) {PROGRESS\\RECORD};
+  \node[attribute] (historyid) at (-3.7,-4.3) {\underline{id}\\PK};
+  \node[attribute] (historyfk) at (-1.3,-3.4) {chapter\_id\\FK};
+  \node[attribute] (historyprevious) at (1.3,-3.4) {previous\\progress};
+  \node[attribute] (historynew) at (-3.7,-7.3) {new\\progress};
+  \node[attribute] (historyrecorded) at (3.7,-7.3) {recorded\_at};
+  \draw[connector] (history) -- (historyid);
+  \draw[connector] (history) -- (historyfk);
+  \draw[connector] (history) -- (historyprevious);
+  \draw[connector] (history) -- (historynew);
+  \draw[connector] (history) -- (historyrecorded);
+
+  \node[entity] (focus) at (0,-11.8) {FOCUS\\SESSION};
+  \node[attribute] (focusid) at (-4.4,-10.3) {\underline{id}\\PK};
+  \node[attribute] (focuscourse) at (-1.5,-9.4) {course\_id\\FK};
+  \node[attribute] (focuschapter) at (1.5,-9.4) {chapter\_id\\FK,\\nullable};
+  \node[attribute] (focusstarted) at (4.4,-10.3) {started\_at};
+  \node[attribute] (focusended) at (-4.4,-13.3) {ended\_at};
+  \node[attribute] (focusduration) at (-1.5,-14.2) {duration\\seconds};
+  \node[attribute] (focusstatus) at (1.5,-14.2) {status};
+  \node[attribute] (focusnotes) at (4.4,-13.3) {notes};
+  \draw[connector] (focus) -- (focusid);
+  \draw[connector] (focus) -- (focuscourse);
+  \draw[connector] (focus) -- (focuschapter);
+  \draw[connector] (focus) -- (focusstarted);
+  \draw[connector] (focus) -- (focusended);
+  \draw[connector] (focus) -- (focusduration);
+  \draw[connector] (focus) -- (focusstatus);
+  \draw[connector] (focus) -- (focusnotes);
 \end{tikzpicture}
 \end{center}
 
