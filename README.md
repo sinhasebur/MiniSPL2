@@ -136,7 +136,7 @@ Possible future extensions include:
 
 **Project Phase: Minimal MVC Application**
 
-The current implementation provides one clean JavaFX MVC shell with eight tabs for study plans, course/chapter setup, progress history, assignments, focus sessions, analytics, and a Gemini Flash study assistant. SQLite persistence, Strategy/State/Observer/Repository examples, validation, asynchronous AI requests, and a local data store are included. Charts, notifications, and advanced search remain suitable follow-up features.
+The current implementation provides one clean JavaFX MVC shell with eight tabs for study plans, course/chapter setup, progress history, assignments, focus sessions, analytics, and a Groq study assistant. SQLite persistence, Strategy/State/Observer/Repository examples, validation, asynchronous AI requests, and a local data store are included. Charts, notifications, and advanced search remain suitable follow-up features.
 
 ## Run the Prototype
 
@@ -149,9 +149,9 @@ mvn javafx:run
 
 The application creates `data/progresspath.db` on its first run. The generated database is ignored by Git.
 
-## Configure the Gemini assistant
+## Configure the Groq assistant
 
-The Assistant tab reads its key locally. Copy `ProgressPath/.env.example` to `ProgressPath/.env`, replace the placeholder with your Gemini key, and keep the file uncommitted; `.env` is ignored by Git. The app accepts `GOOGLE_API_KEY` or `GEMINI_API_KEY` as environment variables (Google's documented precedence is preserved), or `-Dgoogle.api.key` / `-Dgemini.api.key` as JVM properties. The optional `GEMINI_MODEL` and `GEMINI_TIMEOUT_SECONDS` values are documented in the example file.
+The Assistant tab reads its key locally. Copy `ProgressPath/.env.example` to `ProgressPath/.env`, replace the placeholder with your Groq API key, and keep the file uncommitted; `.env` is ignored by Git. The app accepts the `GROQ_API_KEY` environment variable, or `-Dgroq.api.key` as a JVM property. The optional `GROQ_MODEL` and `GROQ_TIMEOUT_SECONDS` values are documented in the example file.
 
 ## Seed Demo Data
 
