@@ -132,13 +132,13 @@ The Assistant tab is an optional study-support screen. It uses the selected acti
   \item The student selects an active study plan and enters a question.
   \item The controller builds a compact context containing plan dates, actual and expected progress, courses, chapter progress/weights/targets, active assignments, and completed focus time.
   \item A JavaFX \code{Task} calls \code{AssistantProvider} on a daemon worker thread so the interface remains responsive.
-  \item \code{GroqAssistantProvider} sends a \code{generateContent} request to the configured Flash model and returns the first text response.
+  \item \code{GroqAssistantProvider} sends a \code{chat completions} request to the configured Groq model and returns the first text response.
   \item The controller displays the answer or a clear configuration/network error; no AI response is written to SQLite.
 \end{enumerate}
 
 \subsection{Configuration and boundaries}
 
-The local project includes \code{.env.example}. Copy it to \code{.env} and set \code{Groq\_API\_KEY}; \code{.env} is ignored by Git. The provider accepts the documented \code{GOOGLE\_API\_KEY} or \code{Groq\_API\_KEY} environment variables (\code{GOOGLE\_API\_KEY} takes precedence), or the \code{-Dgroq.api.key} / \code{-DGroq.api.key} JVM properties. \code{Groq\_MODEL} and \code{Groq\_TIMEOUT\_SECONDS} are optional overrides. The default model is \code{openai/gpt-oss-20b} and the default request timeout is 45 seconds.
+The local project includes \code{.env.example}. Copy it to \code{.env} and set \code{GROQ\_API\_KEY}; \code{.env} is ignored by Git. The provider accepts the \code{GROQ\_API\_KEY} environment variable, or the \code{-Dgroq.api.key} JVM property. \code{GROQ\_MODEL} and \code{GROQ\_TIMEOUT\_SECONDS} are optional overrides. The default model is \code{openai/gpt-oss-20b} and the default request timeout is 45 seconds.
 
 The HTTP client follows the Groq REST \code{/v1/chat/completions} shape. It uses the \code{Authorization} header for authentication, keeping the key out of the request URL, and posts JSON containing a system instruction, one user content part, and a 512-token output limit.
 
@@ -415,7 +415,7 @@ mvn javafx:run
 
 The application creates \code{data/progresspath.db} automatically. To load the current demonstration dataset:
 
-Before using the Assistant tab, copy \code{.env.example} to \code{.env} and set \code{GOOGLE\_API\_KEY} or \code{Groq\_API\_KEY}. The application reads this file itself; Maven does not need a dotenv plugin. Never commit the resulting \code{.env} file.
+Before using the Assistant tab, copy \code{.env.example} to \code{.env} and set \code{GROQ\_API\_KEY}. The application reads this file itself; Maven does not need a dotenv plugin. Never commit the resulting \code{.env} file.
 
 \begin{verbatim}
 mvn -q -DskipTests package
