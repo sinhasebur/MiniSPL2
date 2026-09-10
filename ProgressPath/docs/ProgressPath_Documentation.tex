@@ -89,7 +89,7 @@ Progress & Select a calculation strategy and course, update a chapter percentage
 Assignments & Create or edit an assignment with course, title, description, due date, priority, and status; delete selected assignments.\\
 Focus & Choose a course and optional chapter, start/pause/resume/complete/cancel a timer, add a note, and view saved sessions.\\
 Analytics & Choose a plan and date range; show actual progress, expected progress, completed assignments, focus time, and an at-risk course report.\\
-Assistant & Select an active plan, ask a study question, and receive an asynchronous Gemini Flash response based on a compact plan snapshot. The assistant does not edit stored data.\\
+Assistant & Select an active plan, ask a study question, and receive an asynchronous Groq Flash response based on a compact plan snapshot. The assistant does not edit stored data.\\
 \bottomrule
 \end{longtable}
 
@@ -119,12 +119,12 @@ The application follows a compact Model--View--Controller flow:
   \item \textbf{Model facade:} \code{ProgressPathModel} exposes plan, progress, assignment, focus, and analytics operations, validates domain rules, and notifies observers after mutations.
   \item \textbf{Persistence:} \code{DatabaseManager} opens SQLite connections with foreign keys enabled; repositories map rows to immutable Java records.
   \item \textbf{Headless seeding:} \code{SeedRunner} initializes the schema and invokes \code{DatabaseSeeder.seedDemoData()} without launching JavaFX.
-  \item \textbf{AI provider:} the controller calls the \code{AssistantProvider} boundary; \code{GeminiFlashAssistantProvider} performs the network request without coupling Gemini code to JavaFX or SQLite.
+  \item \textbf{AI provider:} the controller calls the \code{AssistantProvider} boundary; \code{GroqFlashAssistantProvider} performs the network request without coupling Groq code to JavaFX or SQLite.
 \end{itemize}
 
 \section{AI assistant integration}
 
-The Assistant tab is an optional study-support screen. It uses the selected active plan to provide practical explanations, prioritisation suggestions, and short study plans. Existing progress calculations and database operations remain deterministic Java code; Gemini is used only to interpret the supplied snapshot and write guidance.
+The Assistant tab is an optional study-support screen. It uses the selected active plan to provide practical explanations, prioritisation suggestions, and short study plans. Existing progress calculations and database operations remain deterministic Java code; Groq is used only to interpret the supplied snapshot and write guidance.
 
 \subsection{Request flow}
 
@@ -132,23 +132,23 @@ The Assistant tab is an optional study-support screen. It uses the selected acti
   \item The student selects an active study plan and enters a question.
   \item The controller builds a compact context containing plan dates, actual and expected progress, courses, chapter progress/weights/targets, active assignments, and completed focus time.
   \item A JavaFX \code{Task} calls \code{AssistantProvider} on a daemon worker thread so the interface remains responsive.
-  \item \code{GeminiFlashAssistantProvider} sends a \code{generateContent} request to the configured Flash model and returns the first text response.
+  \item \code{GroqFlashAssistantProvider} sends a \code{generateContent} request to the configured Flash model and returns the first text response.
   \item The controller displays the answer or a clear configuration/network error; no AI response is written to SQLite.
 \end{enumerate}
 
 \subsection{Configuration and boundaries}
 
-The local project includes \code{.env.example}. Copy it to \code{.env} and set \code{GEMINI\_API\_KEY}; \code{.env} is ignored by Git. The provider accepts the documented \code{GOOGLE\_API\_KEY} or \code{GEMINI\_API\_KEY} environment variables (\code{GOOGLE\_API\_KEY} takes precedence), or the \code{-Dgoogle.api.key} / \code{-Dgemini.api.key} JVM properties. \code{GEMINI\_MODEL} and \code{GEMINI\_TIMEOUT\_SECONDS} are optional overrides. The default model is \code{gemini-3.8-flash} and the default request timeout is 45 seconds.
+The local project includes \code{.env.example}. Copy it to \code{.env} and set \code{Groq\_API\_KEY}; \code{.env} is ignored by Git. The provider accepts the documented \code{GOOGLE\_API\_KEY} or \code{Groq\_API\_KEY} environment variables (\code{GOOGLE\_API\_KEY} takes precedence), or the \code{-Dgoogle.api.key} / \code{-DGroq.api.key} JVM properties. \code{Groq\_MODEL} and \code{Groq\_TIMEOUT\_SECONDS} are optional overrides. The default model is \code{Groq-3.6-flash} and the default request timeout is 45 seconds.
 
-The HTTP client follows the Gemini REST \code{models.generateContent} shape. It uses the \code{x-goog-api-key} header for authentication, keeping the key out of the request URL, and posts JSON containing a system instruction, one user content part, and a 512-token output limit.
+The HTTP client follows the Groq REST \code{models.generateContent} shape. It uses the \code{Authorization} header for authentication, keeping the key out of the request URL, and posts JSON containing a system instruction, one user content part, and a 512-token output limit.
 
-If Google returns HTTP 403 with ``Your project has been denied access'', the failure is project/key policy rather than application JSON. Create a new authorization key in an accessible Google AI Studio project, restrict it to the Gemini API, and replace the local value. The desktop client cannot override a denied project.
+If Google returns HTTP 403 with ``Your project has been denied access'', the failure is project/key policy rather than application JSON. Create a new authorization key in an accessible Groq Console project, restrict it to the Groq API, and replace the local value. The desktop client cannot override a denied project.
 
 The app deliberately sends only the selected plan snapshot and the current question. It does not send the full database, prior conversation, or API key in the request body. For a distributed release, the provider call should move behind a server-side proxy so a key is not shipped in a desktop binary. The current minimal screen requires network access, does not persist chat history, and cannot guarantee that generated advice is correct; students should verify important academic decisions.
 
 \subsection{Changes in this revision}
 
-This revision adds the eighth, Assistant tab; the provider interface, Gemini Flash HTTP client, compact context builder, asynchronous JavaFX request handling, local \code{.env} loading, and the tracked \code{.env.example} template. Existing plan, course, progress, assignment, focus, analytics, persistence, and test workflows remain unchanged.
+This revision adds the eighth, Assistant tab; the provider interface, Groq Flash HTTP client, compact context builder, asynchronous JavaFX request handling, local \code{.env} loading, and the tracked \code{.env.example} template. Existing plan, course, progress, assignment, focus, analytics, persistence, and test workflows remain unchanged.
 
 \section{Database design}
 
@@ -352,7 +352,7 @@ Repository & \code{StudyPlanRepository}, \code{CourseRepository}, \code{ChapterR
 Strategy & \code{ProgressCalculationStrategy}, weighted/equal policy classes, selected through \code{ProgressCalculator} & Makes the progress policy interchangeable. Weighted progress respects chapter weights; equal progress treats every chapter equally without changing the controller or model workflow.\\
 State & \code{FocusSessionState} with Ready, Running, Paused, Completed, and Cancelled states; \code{FocusTimer} is the context & Keeps valid timer transitions next to the state that owns them. Invalid actions fail clearly, while timing details stay out of the JavaFX controller.\\
 Observer & \code{ModelChangeListener}, \code{ModelChangeType}, and the controller subscription & A completed mutation notifies the interested UI. Tables, choices, dashboard metrics, and analytics refresh together without each editor knowing the internals of the other screens.\\
-Provider Strategy & \code{AssistantProvider} with \code{GeminiFlashAssistantProvider} & Isolates the AI vendor and HTTP details from the controller. A second provider or a local test double can be added without changing the Assistant screen.\\
+Provider Strategy & \code{AssistantProvider} with \code{GroqFlashAssistantProvider} & Isolates the AI vendor and HTTP details from the controller. A second provider or a local test double can be added without changing the Assistant screen.\\
 \bottomrule
 \end{longtable}
 \normalsize
@@ -415,7 +415,7 @@ mvn javafx:run
 
 The application creates \code{data/progresspath.db} automatically. To load the current demonstration dataset:
 
-Before using the Assistant tab, copy \code{.env.example} to \code{.env} and set \code{GOOGLE\_API\_KEY} or \code{GEMINI\_API\_KEY}. The application reads this file itself; Maven does not need a dotenv plugin. Never commit the resulting \code{.env} file.
+Before using the Assistant tab, copy \code{.env.example} to \code{.env} and set \code{GOOGLE\_API\_KEY} or \code{Groq\_API\_KEY}. The application reads this file itself; Maven does not need a dotenv plugin. Never commit the resulting \code{.env} file.
 
 \begin{verbatim}
 mvn -q -DskipTests package
@@ -434,7 +434,7 @@ The implementation is intentionally a minimal application. The following items a
   \item There is no operating-system reminder or notification service.
   \item Focus sessions are stored only when completed or cancelled; crash recovery is not yet persisted as an open-session record.
   \item Repository operations are intentionally straightforward; larger deployments could add transactions around multi-step plan setup and a service layer between the model facade and repositories.
-  \item The Assistant tab depends on a configured Gemini key and network access. Responses are not stored, streamed, or used to mutate plans, courses, assignments, or progress.
+  \item The Assistant tab depends on a configured Groq key and network access. Responses are not stored, streamed, or used to mutate plans, courses, assignments, or progress.
 \end{itemize}
 
 \section{Source map}
@@ -451,7 +451,7 @@ The following locations are relative to \code{src/main/java/com/progresspath} un
 \code{persistence/} & SQLite connection, schema/migration/seeding, and repositories.\\
 \code{progress/} & Strategy interface and progress policies.\\
 \code{focus/} & Focus timer context and State implementations.\\
-\code{ai/} & Assistant provider boundary, Gemini Flash HTTP client, local configuration, and narrow response parsing.\\
+\code{ai/} & Assistant provider boundary, Groq Flash HTTP client, local configuration, and narrow response parsing.\\
 \code{resources/fxml} & Eight-tab JavaFX View in \code{main.fxml}.\\
 \code{resources/css} & Application styling in \code{progresspath.css}.\\
 \code{src/test/java} & Unit tests for progress, persistence/validation, and focus states.\\
