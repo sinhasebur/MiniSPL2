@@ -136,7 +136,7 @@ Possible future extensions include:
 
 **Project Phase: Minimal MVC Application**
 
-The current implementation provides one clean JavaFX MVC shell with seven tabs for study plans, course/chapter setup, progress history, assignments, focus sessions, and analytics. SQLite persistence, Strategy/State/Observer/Repository examples, validation, and a local data store are included. Charts, notifications, and advanced search remain suitable follow-up features.
+The current implementation provides one clean JavaFX MVC shell with eight tabs for study plans, course/chapter setup, progress history, assignments, focus sessions, analytics, and a Gemini Flash study assistant. SQLite persistence, Strategy/State/Observer/Repository examples, validation, asynchronous AI requests, and a local data store are included. Charts, notifications, and advanced search remain suitable follow-up features.
 
 ## Run the Prototype
 
@@ -148,6 +148,10 @@ mvn javafx:run
 ```
 
 The application creates `data/progresspath.db` on its first run. The generated database is ignored by Git.
+
+## Configure the Gemini assistant
+
+The Assistant tab reads its key locally. Copy `ProgressPath/.env.example` to `ProgressPath/.env`, replace the placeholder with your Gemini key, and keep the file uncommitted; `.env` is ignored by Git. The app accepts `GOOGLE_API_KEY` or `GEMINI_API_KEY` as environment variables (Google's documented precedence is preserved), or `-Dgoogle.api.key` / `-Dgemini.api.key` as JVM properties. The optional `GEMINI_MODEL` and `GEMINI_TIMEOUT_SECONDS` values are documented in the example file.
 
 ## Seed Demo Data
 
@@ -175,6 +179,10 @@ sqlite3 -header -column data/progresspath.db "SELECT c.code, ch.name, ch.weight,
 sqlite3 -header -column data/progresspath.db "SELECT title, due_date, priority, status FROM assignments ORDER BY due_date;"
 sqlite3 -header -column data/progresspath.db "SELECT id, previous_progress, new_progress, recorded_at FROM progress_records ORDER BY recorded_at;"
 ```
+
+## Documentation
+
+The printable, monochrome project documentation is available as [ProgressPath Documentation](ProgressPath/docs/ProgressPath_Documentation.pdf). Its editable LaTeX source is stored beside the PDF.
 
 To re-seed from scratch, delete the SQLite file first and run the seeder again:
 

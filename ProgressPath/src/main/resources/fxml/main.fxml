@@ -212,6 +212,41 @@
                         </VBox>
                     </content>
                 </Tab>
+
+                <Tab text="Assistant">
+                    <content>
+                        <VBox spacing="16" styleClass="screen">
+                            <padding><Insets top="24" right="28" bottom="24" left="28"/></padding>
+                            <HBox alignment="CENTER_LEFT" spacing="14">
+                                <VBox spacing="3">
+                                    <Label text="Study assistant" styleClass="screen-title"/>
+                                    <Label text="Ask for practical guidance from the selected plan." styleClass="muted"/>
+                                </VBox>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <ChoiceBox fx:id="assistantPlanChoice" prefWidth="280"/>
+                            </HBox>
+                            <Label fx:id="assistantContextLabel" text="Select an active study plan to include its progress and assignments." styleClass="assistant-context"/>
+                            <HBox spacing="18" VBox.vgrow="ALWAYS">
+                                <VBox spacing="10" prefWidth="430" styleClass="data-section">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Your question" styleClass="section-title"/>
+                                    <TextArea fx:id="assistantPromptField" promptText="Example: What should I study next?" wrapText="true" VBox.vgrow="ALWAYS" prefRowCount="8"/>
+                                    <HBox spacing="8">
+                                        <Button fx:id="assistantAskButton" text="Ask Gemini" onAction="#handleAskAssistant" styleClass="primary-button"/>
+                                        <Button text="Clear" onAction="#handleClearAssistant" styleClass="secondary-button"/>
+                                    </HBox>
+                                    <Label fx:id="assistantStatusLabel" text="Ready." styleClass="muted"/>
+                                </VBox>
+                                <VBox spacing="10" styleClass="data-section" HBox.hgrow="ALWAYS">
+                                    <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                                    <Label text="Assistant response" styleClass="section-title"/>
+                                    <TextArea fx:id="assistantResponseField" editable="false" wrapText="true" VBox.vgrow="ALWAYS" promptText="The answer will appear here."/>
+                                </VBox>
+                            </HBox>
+                            <Label text="The assistant receives a compact snapshot of the selected plan. It does not edit your data." styleClass="muted"/>
+                        </VBox>
+                    </content>
+                </Tab>
             </tabs>
         </TabPane>
     </center>

@@ -1,5 +1,7 @@
 package com.progresspath.controller;
 
+import com.progresspath.ai.AssistantProvider;
+import com.progresspath.ai.GeminiFlashAssistantProvider;
 import com.progresspath.focus.FocusTimer;
 import com.progresspath.model.AnalyticsSummary;
 import com.progresspath.model.Assignment;
@@ -27,8 +29,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.DatePicker;
@@ -68,6 +74,11 @@ public final class MainController implements ModelChangeListener {
     private Course editingCourse;
     private Chapter editingChapter;
     private Assignment editingAssignment;
+
+    // Strategy boundary: the controller talks to an assistant provider, not to
+    // Gemini's HTTP API. A different provider can be substituted later.
+    private final AssistantProvider assistantProvider = new GeminiFlashAssistantProvider();
+    private Task<String> assistantTask;
 
     @FXML private TabPane screenTabs;
     @FXML private Label statusLabel;
@@ -162,6 +173,13 @@ public final class MainController implements ModelChangeListener {
     @FXML private TableColumn<CourseRisk, String> analyticsCourseActual;
     @FXML private TableColumn<CourseRisk, String> analyticsCourseExpected;
     @FXML private TableColumn<CourseRisk, String> analyticsCourseVariance;
+
+    @FXML private ChoiceBox<StudyPlan> assistantPlanChoice;
+    @FXML private Label assistantContextLabel;
+    @FXML private TextArea assistantPromptField;
+    @FXML private TextArea assistantResponseField;
+    @FXML private Label assistantStatusLabel;
+    @FXML private Button assistantAskButton;
 
     @FXML
     private void initialize() {
@@ -417,6 +435,11 @@ public final class MainController implements ModelChangeListener {
                 refreshAnalytics();
             }
         });
+        assistantPlanChoice.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<StudyPlan>() {
+            @Override public void changed(ObservableValue<? extends StudyPlan> observable, StudyPlan oldValue, StudyPlan newValue) {
+                refreshAssistantContext();
+            }
+        });
     }
 
     private void refreshAll() {
@@ -428,6 +451,7 @@ public final class MainController implements ModelChangeListener {
         refreshAssignmentsPlan();
         refreshFocusPlan();
         refreshAnalytics();
+        refreshAssistantContext();
     }
 
     private void refreshPlanTable() {
@@ -444,6 +468,7 @@ public final class MainController implements ModelChangeListener {
         replacePlanChoices(assignmentPlanChoice, plans);
         replacePlanChoices(focusPlanChoice, plans);
         replacePlanChoices(analyticsPlanChoice, plans);
+        replacePlanChoices(assistantPlanChoice, plans);
     }
 
     private void replacePlanChoices(ChoiceBox<StudyPlan> choice, List<StudyPlan> plans) {
@@ -631,6 +656,167 @@ public final class MainController implements ModelChangeListener {
         analyticsFocus.setText(formatFocusHours(summary.focusSeconds()));
         analyticsCompleted.setText(String.valueOf(summary.completedAssignments()));
         analyticsRiskTable.setItems(FXCollections.observableArrayList(model.getCourseRisks(plan.id(), to)));
+    }
+
+    private void refreshAssistantContext() {
+        StudyPlan plan = assistantPlanChoice.getValue();
+        if (plan == null) {
+            assistantContextLabel.setText("Select an active study plan to include its progress and assignments.");
+            assistantAskButton.setDisable(assistantTask != null && assistantTask.isRunning());
+            return;
+        }
+        PlanSummary summary = model.summarize(plan.id(), strategy());
+        assistantContextLabel.setText("Context: " + plan.name() + "  •  "
+                + summary.courseCount() + " courses  •  "
+                + summary.chapterCount() + " chapters  •  "
+                + "actual " + formatPercent(summary.progress()));
+        assistantAskButton.setDisable(assistantTask != null && assistantTask.isRunning());
+    }
+
+    /**
+     * Builds a compact, explicit context snapshot for one request.
+     * The assistant receives useful planning data without the entire database
+     * or previous conversation being sent on every call.
+     */
+    private String buildAssistantContext(StudyPlan plan) {
+        if (plan == null) {
+            return "No study plan is selected. The student is asking a general study question.";
+        }
+        StringBuilder context = new StringBuilder();
+        PlanSummary summary = model.summarize(plan.id(), strategy());
+        double expected = model.getExpectedProgress(plan.id(), LocalDate.now());
+        context.append("Plan: ").append(plan.name()).append('\n');
+        context.append("Dates: ").append(formatDate(plan.startDate())).append(" to ")
+                .append(formatDate(plan.endDate())).append('\n');
+        context.append("Actual progress: ").append(formatPercent(summary.progress())).append('\n');
+        context.append("Expected progress today: ").append(formatPercent(expected)).append('\n');
+        context.append("Status: ").append(model.getProgressStatus(summary.progress(), expected)).append('\n');
+
+        context.append("Courses and chapters:\n");
+        List<Course> courses = model.getCourses(plan.id());
+        int courseCount = 0;
+        for (Course course : courses) {
+            if (courseCount == 20) {
+                context.append("- Additional courses omitted from this request.\n");
+                break;
+            }
+            context.append("- ").append(course.code()).append(" — ").append(course.name()).append('\n');
+            List<Chapter> chapters = model.getChapters(course.id());
+            int chapterCount = 0;
+            for (Chapter chapter : chapters) {
+                if (chapterCount == 20) {
+                    context.append("  - Additional chapters omitted.\n");
+                    break;
+                }
+                context.append("  - ").append(chapter.name())
+                        .append(" | progress ").append(formatPercent(chapter.progress()))
+                        .append(" | weight ").append(formatPercent(chapter.weight()))
+                        .append(" | target ").append(formatDate(chapter.targetDate())).append('\n');
+                chapterCount++;
+            }
+            courseCount++;
+        }
+
+        context.append("Active assignments:\n");
+        int assignmentCount = 0;
+        for (Assignment assignment : model.getAssignments(plan.id())) {
+            if (assignment.status() == AssignmentStatus.COMPLETED
+                    || assignment.status() == AssignmentStatus.CANCELLED) {
+                continue;
+            }
+            if (assignmentCount == 15) {
+                context.append("- Additional assignments omitted.\n");
+                break;
+            }
+            context.append("- ").append(assignment.title())
+                    .append(" | due ").append(formatDate(assignment.dueDate()))
+                    .append(" | priority ").append(assignment.priority())
+                    .append(" | status ").append(assignment.status()).append('\n');
+            assignmentCount++;
+        }
+        if (assignmentCount == 0) {
+            context.append("- No active assignments.\n");
+        }
+
+        long completedFocusSeconds = 0;
+        for (FocusSession session : model.getFocusSessions(plan.id())) {
+            if (session.status() == FocusSessionStatus.COMPLETED) {
+                completedFocusSeconds += session.durationSeconds();
+            }
+        }
+        context.append("Completed focus time: ").append(formatDuration(completedFocusSeconds)).append('\n');
+        return context.toString();
+    }
+
+    @FXML
+    private void handleAskAssistant() {
+        if (assistantTask != null && assistantTask.isRunning()) {
+            report("The assistant is still preparing an answer.");
+            return;
+        }
+        String question = assistantPromptField.getText();
+        if (question == null || question.isBlank()) {
+            report("Enter a question for the assistant.");
+            assistantPromptField.requestFocus();
+            return;
+        }
+
+        StudyPlan plan = assistantPlanChoice.getValue();
+        String context = buildAssistantContext(plan);
+        assistantResponseField.setText("Thinking…");
+        assistantStatusLabel.setText("Contacting Gemini Flash…");
+        assistantAskButton.setDisable(true);
+
+        assistantTask = new Task<String>() {
+            @Override
+            protected String call() throws Exception {
+                return assistantProvider.ask(question.trim(), context);
+            }
+        };
+        assistantTask.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent event) {
+                assistantResponseField.setText(assistantTask.getValue());
+                assistantStatusLabel.setText("Answer ready.");
+                assistantAskButton.setDisable(false);
+                report("Assistant answer ready.");
+                assistantTask = null;
+            }
+        });
+        assistantTask.setOnFailed(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent event) {
+                Throwable error = assistantTask.getException();
+                String message = error == null || error.getMessage() == null
+                        ? "The assistant request could not be completed."
+                        : error.getMessage();
+                assistantResponseField.setText("Unable to get an answer.\n\n" + message);
+                assistantStatusLabel.setText("Request failed.");
+                assistantAskButton.setDisable(false);
+                report(message);
+                assistantTask = null;
+            }
+        });
+        assistantTask.setOnCancelled(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent event) {
+                assistantResponseField.setText("The assistant request was cancelled.");
+                assistantStatusLabel.setText("Request cancelled.");
+                assistantAskButton.setDisable(false);
+                assistantTask = null;
+            }
+        });
+        Thread worker = new Thread(assistantTask, "gemini-flash-assistant");
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    @FXML
+    private void handleClearAssistant() {
+        assistantPromptField.clear();
+        assistantResponseField.clear();
+        assistantStatusLabel.setText("Ready.");
+        refreshAssistantContext();
     }
 
     @FXML

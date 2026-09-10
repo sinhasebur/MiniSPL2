@@ -1,5 +1,12 @@
 target/
 data/
+.env
+.env.*
+!.env.example
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.toc
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
