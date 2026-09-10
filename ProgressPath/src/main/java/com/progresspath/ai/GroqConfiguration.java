@@ -11,48 +11,45 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reads local Gemini settings without adding a dotenv dependency.
+ * Reads local Groq settings without adding a dotenv dependency.
  *
  * Environment variables and JVM properties take precedence over .env values,
  * which makes deployment configuration explicit while keeping local setup easy.
  */
-public final class GeminiConfiguration {
-    public static final String DEFAULT_MODEL = "gemini-3.8-flash";
+public final class GroqConfiguration {
+    public static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
     public static final int DEFAULT_TIMEOUT_SECONDS = 45;
 
     private final String apiKey;
     private final String model;
     private final Duration timeout;
 
-    private GeminiConfiguration(String apiKey, String model, Duration timeout) {
+    private GroqConfiguration(String apiKey, String model, Duration timeout) {
         this.apiKey = apiKey;
         this.model = model;
         this.timeout = timeout;
     }
 
-    public static GeminiConfiguration fromEnvironment() {
+    public static GroqConfiguration fromEnvironment() {
         Map<String, String> dotEnv = readDotEnv();
         String apiKey = firstValue(
-                System.getenv("GOOGLE_API_KEY"),
-                System.getenv("GEMINI_API_KEY"),
-                System.getProperty("google.api.key"),
-                System.getProperty("gemini.api.key"),
-                dotEnv.get("GOOGLE_API_KEY"),
-                dotEnv.get("GEMINI_API_KEY")
+                System.getenv("GROQ_API_KEY"),
+                System.getProperty("groq.api.key"),
+                dotEnv.get("GROQ_API_KEY")
         );
         String model = firstValue(
-                System.getenv("GEMINI_MODEL"),
-                System.getProperty("gemini.model"),
-                dotEnv.get("GEMINI_MODEL"),
+                System.getenv("GROQ_MODEL"),
+                System.getProperty("groq.model"),
+                dotEnv.get("GROQ_MODEL"),
                 DEFAULT_MODEL
         );
         String timeoutValue = firstValue(
-                System.getenv("GEMINI_TIMEOUT_SECONDS"),
-                System.getProperty("gemini.timeout.seconds"),
-                dotEnv.get("GEMINI_TIMEOUT_SECONDS"),
+                System.getenv("GROQ_TIMEOUT_SECONDS"),
+                System.getProperty("groq.timeout.seconds"),
+                dotEnv.get("GROQ_TIMEOUT_SECONDS"),
                 String.valueOf(DEFAULT_TIMEOUT_SECONDS)
         );
-        return new GeminiConfiguration(apiKey, model, parseTimeout(timeoutValue));
+        return new GroqConfiguration(apiKey, model, parseTimeout(timeoutValue));
     }
 
     public boolean isConfigured() {

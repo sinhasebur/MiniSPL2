@@ -1,7 +1,7 @@
 package com.progresspath.controller;
 
 import com.progresspath.ai.AssistantProvider;
-import com.progresspath.ai.GeminiFlashAssistantProvider;
+import com.progresspath.ai.GroqAssistantProvider;
 import com.progresspath.focus.FocusTimer;
 import com.progresspath.model.AnalyticsSummary;
 import com.progresspath.model.Assignment;
@@ -76,8 +76,8 @@ public final class MainController implements ModelChangeListener {
     private Assignment editingAssignment;
 
     // Strategy boundary: the controller talks to an assistant provider, not to
-    // Gemini's HTTP API. A different provider can be substituted later.
-    private final AssistantProvider assistantProvider = new GeminiFlashAssistantProvider();
+    // Groq's HTTP API. A different provider can be substituted later.
+    private final AssistantProvider assistantProvider = new GroqAssistantProvider();
     private Task<String> assistantTask;
 
     @FXML private TabPane screenTabs;
@@ -764,7 +764,7 @@ public final class MainController implements ModelChangeListener {
         StudyPlan plan = assistantPlanChoice.getValue();
         String context = buildAssistantContext(plan);
         assistantResponseField.setText("Thinking…");
-        assistantStatusLabel.setText("Contacting Gemini Flash…");
+        assistantStatusLabel.setText("Contacting Groq…");
         assistantAskButton.setDisable(true);
 
         assistantTask = new Task<String>() {
@@ -806,7 +806,7 @@ public final class MainController implements ModelChangeListener {
                 assistantTask = null;
             }
         });
-        Thread worker = new Thread(assistantTask, "gemini-flash-assistant");
+        Thread worker = new Thread(assistantTask, "groq-assistant");
         worker.setDaemon(true);
         worker.start();
     }

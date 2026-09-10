@@ -2,20 +2,20 @@ package com.progresspath.ai;
 
 /**
  * Extracts the first string value for a JSON key and decodes JSON escapes.
- * Gemini responses are intentionally handled narrowly so this demo stays
+ * Groq responses are intentionally handled narrowly so this demo stays
  * dependency-free; the parser does not attempt to be a general JSON parser.
  */
-final class GeminiResponseParser {
-    private GeminiResponseParser() {
+final class GroqResponseParser {
+    private GroqResponseParser() {
     }
 
-    static String firstText(String json) {
-        return firstString(json, "text");
+    static String firstContent(String json) {
+        return firstString(json, "content");
     }
 
     static String errorMessage(String json) {
         String message = firstString(json, "message");
-        return message.isBlank() ? "The Gemini service returned an error." : message;
+        return message.isBlank() ? "The Groq service returned an error." : message;
     }
 
     private static String firstString(String json, String key) {

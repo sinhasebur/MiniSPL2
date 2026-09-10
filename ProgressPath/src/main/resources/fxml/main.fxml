@@ -232,7 +232,7 @@
                                     <Label text="Your question" styleClass="section-title"/>
                                     <TextArea fx:id="assistantPromptField" promptText="Example: What should I study next?" wrapText="true" VBox.vgrow="ALWAYS" prefRowCount="8"/>
                                     <HBox spacing="8">
-                                        <Button fx:id="assistantAskButton" text="Ask Gemini" onAction="#handleAskAssistant" styleClass="primary-button"/>
+                                        <Button fx:id="assistantAskButton" text="Ask Groq" onAction="#handleAskAssistant" styleClass="primary-button"/>
                                         <Button text="Clear" onAction="#handleClearAssistant" styleClass="secondary-button"/>
                                     </HBox>
                                     <Label fx:id="assistantStatusLabel" text="Ready." styleClass="muted"/>

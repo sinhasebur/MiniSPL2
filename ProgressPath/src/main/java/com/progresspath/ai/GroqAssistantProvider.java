@@ -8,28 +8,28 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Gemini Flash implementation of the assistant provider.
+ * Groq implementation of the assistant provider.
  *
  * The provider is deliberately independent of JavaFX so it can be tested and
  * replaced without coupling network work to the View or Controller.
  */
-public final class GeminiFlashAssistantProvider implements AssistantProvider {
-    private static final String ENDPOINT =
-            "https://generativelanguage.googleapis.com/v1beta/models/";
+public final class GroqAssistantProvider implements AssistantProvider {
+    private static final String ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
     private static final String SYSTEM_INSTRUCTION =
             "You are the ProgressPath study assistant. Use only the supplied study context. "
                     + "Do not invent courses, dates, progress values, or assignments. "
                     + "Give practical, concise study guidance. If the context is insufficient, "
-                    + "say what is missing. Do not claim to change the user's data.";
+                    + "say what is missing. Do not claim to change the user's data. "
+                    + "IMPORTANT: Output ONLY plain text. Do NOT use Markdown formatting (no asterisks, no tables, no HTML tags).";
 
-    private final GeminiConfiguration configuration;
+    private final GroqConfiguration configuration;
     private final HttpClient httpClient;
 
-    public GeminiFlashAssistantProvider() {
-        this(GeminiConfiguration.fromEnvironment());
+    public GroqAssistantProvider() {
+        this(GroqConfiguration.fromEnvironment());
     }
 
-    GeminiFlashAssistantProvider(GeminiConfiguration configuration) {
+    GroqAssistantProvider(GroqConfiguration configuration) {
         this.configuration = configuration;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(configuration.timeout())
@@ -40,7 +40,7 @@ public final class GeminiFlashAssistantProvider implements AssistantProvider {
     public String ask(String question, String studyContext) throws IOException, InterruptedException {
         if (!configuration.isConfigured()) {
             throw new IllegalStateException(
-                    "Gemini is not configured. Add GOOGLE_API_KEY or GEMINI_API_KEY to .env or your environment.");
+                    "Groq is not configured. Add GROQ_API_KEY to .env or your environment.");
         }
         if (question == null || question.isBlank()) {
             throw new IllegalArgumentException("Enter a question for the assistant.");
@@ -48,24 +48,28 @@ public final class GeminiFlashAssistantProvider implements AssistantProvider {
         String context = studyContext == null || studyContext.isBlank()
                 ? "No study plan is selected."
                 : studyContext;
-        String requestBody = GeminiJson.request(SYSTEM_INSTRUCTION, context, question.trim());
-        String endpoint = ENDPOINT + configuration.model() + ":generateContent";
-        HttpRequest request = HttpRequest.newBuilder(URI.create(endpoint))
+        
+        String requestBody = GroqJson.request(configuration.model(), SYSTEM_INSTRUCTION, context, question.trim());
+        
+        HttpRequest request = HttpRequest.newBuilder(URI.create(ENDPOINT))
                 .timeout(configuration.timeout())
                 .header("Content-Type", "application/json")
-                // Header authentication keeps the key out of the request URL.
-                .header("x-goog-api-key", configuration.apiKey())
+                .header("Authorization", "Bearer " + configuration.apiKey())
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody, StandardCharsets.UTF_8))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Gemini request failed (" + response.statusCode() + "): "
-                    + GeminiResponseParser.errorMessage(response.body()));
+            if (response.statusCode() == 401 || response.statusCode() == 403) {
+                throw new IOException("Groq rejected this API key (" + response.statusCode()
+                        + "). Check your API key at console.groq.com.");
+            }
+            throw new IOException("Groq request failed (" + response.statusCode() + "): "
+                    + GroqResponseParser.errorMessage(response.body()));
         }
-        String answer = GeminiResponseParser.firstText(response.body());
+        String answer = GroqResponseParser.firstContent(response.body());
         if (answer.isBlank()) {
-            throw new IOException("Gemini returned no answer. Try asking a shorter question.");
+            throw new IOException("Groq returned no answer. Try asking a shorter question.");
         }
         return answer.trim();
     }

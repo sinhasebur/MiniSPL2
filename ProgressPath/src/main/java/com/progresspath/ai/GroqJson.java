@@ -1,19 +1,23 @@
 package com.progresspath.ai;
 
 /**
- * Small JSON writer for the Gemini request body. The project only needs three
+ * Small JSON writer for the Groq request body. The project only needs three
  * string values, so keeping this local avoids another runtime dependency.
  */
-final class GeminiJson {
-    private GeminiJson() {
+final class GroqJson {
+    private GroqJson() {
     }
 
-    static String request(String systemInstruction, String studyContext, String question) {
+    static String request(String model, String systemInstruction, String studyContext, String question) {
         String prompt = "Study context:\n" + studyContext + "\n\nStudent question:\n" + question;
         return "{"
-                + "\"system_instruction\":{\"parts\":[{\"text\":" + quote(systemInstruction) + "}]},"
-                + "\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":" + quote(prompt) + "}]}],"
-                + "\"generationConfig\":{\"temperature\":0.4,\"maxOutputTokens\":512}"
+                + "\"model\":" + quote(model) + ","
+                + "\"messages\":["
+                + "{\"role\":\"system\",\"content\":" + quote(systemInstruction) + "},"
+                + "{\"role\":\"user\",\"content\":" + quote(prompt) + "}"
+                + "],"
+                + "\"temperature\":0.4,"
+                + "\"max_tokens\":512"
                 + "}";
     }
 
